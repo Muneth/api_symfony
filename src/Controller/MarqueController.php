@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Marque;
+use App\Entity\Voiture;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -85,6 +86,7 @@ class MarqueController extends AbstractController
     #[Route('/marque/{id}', name: 'app_marque_delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
     public function delete(ManagerRegistry $doctrine, $id): Response
     {
+        // supprimer une marque et toutes les voitures qui lui sont associées dans la base de données
         $entityManager = $doctrine->getManager();
 
         $marque = $doctrine->getRepository(Marque::class)->find($id);
@@ -93,9 +95,15 @@ class MarqueController extends AbstractController
             return $this->json('No marque found for id' . $id, 404);
         }
 
+        $voitures = $doctrine->getRepository(Voiture::class)->findBy(['marque' => $marque]);
+
+        foreach ($voitures as $voiture) {
+            $entityManager->remove($voiture);
+        }
+
         $entityManager->remove($marque);
         $entityManager->flush();
 
-        return $this->json('Deleted marque successfully');
+        return $this->json('Suppression de la marque et de toutes les voitures associées');
     }
 }

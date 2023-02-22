@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Personne;
 use App\Entity\User;
+use App\Entity\Voiture;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,6 +31,9 @@ class PersonneController extends AbstractController
                 'email' => $personne->getEmail(),
                 'tel' => $personne->getTel(),
                 'ville' => $personne->getVille(),
+                'user' => $personne->getUser()->getId(),
+                // afficer les voitures de la personne
+                'voitures' => $personne->getVoitures(),
             ];
         }
         return $this->json($data);

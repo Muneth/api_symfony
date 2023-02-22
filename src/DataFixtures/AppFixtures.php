@@ -40,20 +40,20 @@ class AppFixtures extends Fixture
             $manager->persist($blogPost);
         }
 
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 5; $i++) {
             $marque = new Marque();
             $marque->setMarque('Marque ' . $i);
             $manager->persist($marque);
         }
 
-        for ($i = 0; $i < 10; $i++) {
-            $voiture = new Voiture();
-            $voiture->setModel('Model ' . $i);
-            $voiture->setImmatriculation('Immatriculation ' . $i);
-            $voiture->setPlaces($i);
-            $voiture->setMarque($manager->getRepository(Marque::class)->find($i));
-            $manager->persist($voiture);
-        }
+        // for ($i = 0; $i < 20; $i++) {
+        //     $voiture = new Voiture();
+        //     $voiture->setModel('Model ' . $i);
+        //     $voiture->setImmatriculation('Immatriculation ' . $i);
+        //     $voiture->setPlaces($i);
+        //     $voiture->setMarque($manager->getRepository(Marque::class)->find($i));
+        //     $manager->persist($voiture);
+        // }
 
 
         $manager->flush();
