@@ -4,6 +4,8 @@ namespace App\DataFixtures;
 
 use App\Entity\Project;
 use App\Entity\BlogPost;
+use App\Entity\Marque;
+use App\Entity\Voiture;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
@@ -37,6 +39,22 @@ class AppFixtures extends Fixture
             $blogPost->setAuthor('Author ' . $i);
             $manager->persist($blogPost);
         }
+
+        for ($i = 0; $i < 10; $i++) {
+            $marque = new Marque();
+            $marque->setMarque('Marque ' . $i);
+            $manager->persist($marque);
+        }
+
+        for ($i = 0; $i < 10; $i++) {
+            $voiture = new Voiture();
+            $voiture->setModel('Model ' . $i);
+            $voiture->setImmatriculation('Immatriculation ' . $i);
+            $voiture->setPlaces($i);
+            $voiture->setMarque($manager->getRepository(Marque::class)->find($i));
+            $manager->persist($voiture);
+        }
+
 
         $manager->flush();
     }

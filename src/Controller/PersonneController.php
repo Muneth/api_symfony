@@ -30,7 +30,6 @@ class PersonneController extends AbstractController
                 'email' => $personne->getEmail(),
                 'tel' => $personne->getTel(),
                 'ville' => $personne->getVille(),
-                'user' => $personne->getUser(),
             ];
         }
         return $this->json($data);
