@@ -6,6 +6,7 @@ use App\Entity\Project;
 use App\Entity\BlogPost;
 use App\Entity\Marque;
 use App\Entity\Voiture;
+use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
@@ -15,30 +16,6 @@ class AppFixtures extends Fixture
     {
         // $product = new Product();
         // $manager->persist($product);
-
-        // $project = new Project();
-        // $project->setName('Project 1');
-        // $project->setDescription('Description 1');
-        // $project->setPrice(100);
-        // $manager->persist($project);
-
-
-        for ($i = 0; $i < 10; $i++) {
-            $project = new Project();
-            $project->setName('Project ' . $i);
-            $project->setDescription('Description ' . $i);
-            $project->setPrice($i * 100);
-            $manager->persist($project);
-        }
-
-        for ($i = 0; $i < 10; $i++) {
-            $blogPost = new BlogPost();
-            $blogPost->setTitle('Blog Post ' . $i);
-            $blogPost->setContent('Content ' . $i);
-            $blogPost->setPublished(new \DateTime());
-            $blogPost->setAuthor('Author ' . $i);
-            $manager->persist($blogPost);
-        }
 
         for ($i = 0; $i < 5; $i++) {
             $marque = new Marque();
@@ -55,6 +32,13 @@ class AppFixtures extends Fixture
         //     $manager->persist($voiture);
         // }
 
+
+        for ($i = 0; $i < 5; $i++) {
+            $user = new User();
+            $user->setLogin('user' . $i);
+            $user->setPassword('password' . $i);
+            $manager->persist($user);
+        }
 
         $manager->flush();
     }

@@ -10,15 +10,14 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 
 #[Route('/api', name: 'app_')]
-
 class UserController extends AbstractController
 {
-    #[Route('/user', name: 'app_user')]
+    #[Route('/user', name: 'app_user', methods: ['GET'])]
     public function index(ManagerRegistry $doctrine): Response
     {
 
         $users = $doctrine
-            ->getRepository(Project::class)
+            ->getRepository(User::class)
             ->findAll();
 
         $data = [];
