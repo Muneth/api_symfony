@@ -49,7 +49,7 @@ class ProjectController extends AbstractController
         return $this->json('Created new article successfully with id ' . $project->getId());
     }
 
-    #[Route('/article/{id}', name: 'article_show', methods: ['GET'])]
+    #[Route('/article/{id}', name: 'article_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function show(ManagerRegistry $doctrine, int $id): Response
     {
         $project = $doctrine->getRepository(Project::class)->find($id);
