@@ -37,9 +37,13 @@ class Personne
     #[ORM\OneToMany(mappedBy: 'personne', targetEntity: Voiture::class)]
     private Collection $voitures;
 
+    #[ORM\OneToMany(mappedBy: 'conducteur', targetEntity: Trajet::class, orphanRemoval: true)]
+    private Collection $trajetsconduit;
+
     public function __construct()
     {
         $this->voitures = new ArrayCollection();
+        $this->trajetsconduit = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -143,6 +147,36 @@ class Personne
             // set the owning side to null (unless already changed)
             if ($voiture->getPersonne() === $this) {
                 $voiture->setPersonne(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Trajet>
+     */
+    public function getTrajetsconduit(): Collection
+    {
+        return $this->trajetsconduit;
+    }
+
+    public function addTrajetsconduit(Trajet $trajetsconduit): self
+    {
+        if (!$this->trajetsconduit->contains($trajetsconduit)) {
+            $this->trajetsconduit->add($trajetsconduit);
+            $trajetsconduit->setConducteur($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTrajetsconduit(Trajet $trajetsconduit): self
+    {
+        if ($this->trajetsconduit->removeElement($trajetsconduit)) {
+            // set the owning side to null (unless already changed)
+            if ($trajetsconduit->getConducteur() === $this) {
+                $trajetsconduit->setConducteur(null);
             }
         }
 

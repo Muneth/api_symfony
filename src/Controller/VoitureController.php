@@ -32,6 +32,7 @@ class VoitureController extends AbstractController
                 'marque' => $voiture->getMarque()->getMarque(),
             ];
         }
+
         return $this->json($data);
     }
 
