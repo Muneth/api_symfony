@@ -39,7 +39,8 @@ class UserController extends AbstractController
 
         $user = new User();
         $user->setLogin($request->request->get('login'));
-        $user->setPassword($request->request->get('password'));
+        // hash password before saving it to database
+        $user->setPassword(password_hash($request->request->get('password'), PASSWORD_DEFAULT));
 
         $entityManager->persist($user);
         $entityManager->flush();
@@ -95,5 +96,21 @@ class UserController extends AbstractController
         $entityManager->flush();
 
         return $this->json('User deleted successfully');
+    }
+
+    #[Route('/login', name: 'app_user_login', methods: ['POST'])]
+    public function login(ManagerRegistry $doctrine, Request $request): Response
+    {
+        $login = $request->request->get('login');
+        $password = $request->request->get('password');
+
+        $user = $doctrine->getRepository(User::class)->findOneBy(['login' => $login]);
+        $passwordHash = $user->getPassword();
+
+        if (password_verify($password, $passwordHash)) {
+            return $this->json('Login successful');
+        } else {
+            return $this->json('Login failed', 401);
+        }
     }
 }

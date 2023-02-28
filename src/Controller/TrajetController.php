@@ -49,6 +49,17 @@ class TrajetController extends AbstractController
                 'villedepart' => $trajet->getVilledepart()->getNom(),
                 'villearrive' => $trajet->getVillearrive()->getNom(),
                 'voiture' => $voiture,
+                // Details of passagers
+                'personneUsers' => $trajet->getPersonnesUser()->map(function ($passager) {
+                    return [
+                        'id' => $passager->getId(),
+                        'nom' => $passager->getNom(),
+                        'prenom' => $passager->getPrenom(),
+                        'email' => $passager->getEmail(),
+                        'tel' => $passager->getTel(),
+                        'ville' => $passager->getVille(),
+                    ];
+                })->toArray(),
 
                 // Details of conducteur
                 'conducteur' => [
@@ -91,6 +102,12 @@ class TrajetController extends AbstractController
             ];
         })->toArray();
 
+        if (empty($voitures))
+            //continue;
+            $voiture = [];
+        else
+            $voiture = $voitures[0];
+
         $data = [
             'id' => $trajet->getId(),
             'date' => $trajet->getDate(),
@@ -98,7 +115,7 @@ class TrajetController extends AbstractController
             'villedepart' => $trajet->getVilledepart()->getNom(),
             'villearrive' => $trajet->getVillearrive()->getNom(),
             // Details of single voiture from the array of voitures owned by conducteur
-            'voiture' => $voitures[0],
+            'voiture' => $voiture,
             'conducteur' => [
                 'id' => $trajet->getConducteur()->getId(),
                 'nom' => $trajet->getConducteur()->getNom(),
@@ -129,6 +146,7 @@ class TrajetController extends AbstractController
         $villearrive = $doctrine->getRepository(Ville::class)->find($request->get('villearrive_id'));
         // $voiture = $doctrine->getRepository(Voiture::class)->find($request->get('voiture'));
         $conducteur = $doctrine->getRepository(Personne::class)->find($request->get('conducteur_id'));
+        $personneUser = $doctrine->getRepository(Personne::class)->find($request->get('personne_id'));
 
         // get current date
         $date = new \DateTime($request->get('date'));
@@ -140,6 +158,7 @@ class TrajetController extends AbstractController
         $trajet->setVillearrive($villearrive);
         // $trajet->setVoiture($voiture);
         $trajet->setConducteur($conducteur);
+        $trajet->addPersonnesUser($personneUser);
 
         $entityManager->persist($trajet);
         $entityManager->flush();

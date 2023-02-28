@@ -40,10 +40,14 @@ class Personne
     #[ORM\OneToMany(mappedBy: 'conducteur', targetEntity: Trajet::class, orphanRemoval: true)]
     private Collection $trajetsconduit;
 
+    #[ORM\ManyToMany(targetEntity: Trajet::class, inversedBy: 'personnesUser')]
+    private Collection $trajets;
+
     public function __construct()
     {
         $this->voitures = new ArrayCollection();
         $this->trajetsconduit = new ArrayCollection();
+        $this->trajets = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -179,6 +183,30 @@ class Personne
                 $trajetsconduit->setConducteur(null);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Trajet>
+     */
+    public function getTrajets(): Collection
+    {
+        return $this->trajets;
+    }
+
+    public function addTrajet(Trajet $trajet): self
+    {
+        if (!$this->trajets->contains($trajet)) {
+            $this->trajets->add($trajet);
+        }
+
+        return $this;
+    }
+
+    public function removeTrajet(Trajet $trajet): self
+    {
+        $this->trajets->removeElement($trajet);
 
         return $this;
     }

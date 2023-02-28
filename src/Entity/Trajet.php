@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\TrajetRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -31,6 +33,14 @@ class Trajet
     #[ORM\ManyToOne(inversedBy: 'trajetsconduit')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Personne $conducteur = null;
+
+    #[ORM\ManyToMany(targetEntity: Personne::class, mappedBy: 'trajets')]
+    private Collection $personnesUser;
+
+    public function __construct()
+    {
+        $this->personnesUser = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -93,6 +103,33 @@ class Trajet
     public function setConducteur(?Personne $conducteur): self
     {
         $this->conducteur = $conducteur;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Personne>
+     */
+    public function getPersonnesUser(): Collection
+    {
+        return $this->personnesUser;
+    }
+
+    public function addPersonnesUser(Personne $personnesUser): self
+    {
+        if (!$this->personnesUser->contains($personnesUser)) {
+            $this->personnesUser->add($personnesUser);
+            $personnesUser->addTrajet($this);
+        }
+
+        return $this;
+    }
+
+    public function removePersonnesUser(Personne $personnesUser): self
+    {
+        if ($this->personnesUser->removeElement($personnesUser)) {
+            $personnesUser->removeTrajet($this);
+        }
 
         return $this;
     }
