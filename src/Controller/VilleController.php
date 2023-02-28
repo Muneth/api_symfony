@@ -59,8 +59,15 @@ class VilleController extends AbstractController
         $entityManager = $doctrine->getManager();
 
         $ville = new Ville();
-        $ville->setNom($request->request->get('nom'));
-        $ville->setCp($request->request->get('cp'));
+        // Verify if the ville already exists in the database 
+        $villeExists = $entityManager->getRepository(Ville::class)->findOneBy(['nom' => $request->request->get('nom')]);
+
+        if ($villeExists) {
+            return $this->json('Ville already exists', 400);
+        } else {
+            $ville->setNom($request->request->get('nom'));
+            $ville->setCp($request->request->get('cp'));
+        }
 
         $entityManager->persist($ville);
         $entityManager->flush();

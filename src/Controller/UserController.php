@@ -8,109 +8,54 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
+// User Registration and Login 
+// 
 #[Route('/api', name: 'app_')]
 class UserController extends AbstractController
 {
-    #[Route('/user', name: 'app_user', methods: ['GET'])]
-    public function index(ManagerRegistry $doctrine): Response
-    {
-
-        $users = $doctrine
-            ->getRepository(User::class)
-            ->findAll();
-
-        $data = [];
-
-        foreach ($users as $user) {
-            $data[] = [
-                'id' => $user->getId(),
-                'login' => $user->getLogin(),
-                'password' => $user->getPassword(),
-            ];
-        }
-        return $this->json($data);
-    }
-
-    #[Route('/user', name: 'app_user_create', methods: ['POST'])]
-    public function new(ManagerRegistry $doctrine, Request $request): Response
+    #[Route('/register', name: 'register', methods: ['POST'])]
+    public function index(ManagerRegistry $doctrine, Request $request, UserPasswordHasherInterface $passwordHasher): Response
     {
         $entityManager = $doctrine->getManager();
 
         $user = new User();
-        $user->setLogin($request->request->get('login'));
-        // hash password before saving it to database
-        $user->setPassword(password_hash($request->request->get('password'), PASSWORD_DEFAULT));
+        $userExists = $doctrine->getRepository(User::class)->findOneBy(['email' => $request->get('email')]);
+        if ($userExists) {
+            return $this->json('User already exists', 404);
+        } else {
+            $email = $request->get('email');
+            $username = $request->get('username');
+            $plaintextPassword = $request->get('password');
+            $hashedPassword = $passwordHasher->hashPassword($user, $plaintextPassword);
+            $user->setUsername($username);
+            $user->setEmail($email);
+            $user->setPassword($hashedPassword);
+        }
 
         $entityManager->persist($user);
         $entityManager->flush();
 
-        return $this->json('Created new user successfully with id ' . $user->getId());
-    }
-
-    #[Route('/user/{id}', name: 'app_user_show', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function show(ManagerRegistry $doctrine, int $id): Response
-    {
-        $user = $doctrine->getRepository(User::class)->find($id);
-
-        if (!$user) {
-            return $this->json('No user found for id' . $id, 404);
-        }
-
-        return $this->json([
-            'id' => $user->getId(),
-            'login' => $user->getLogin(),
-            'password' => $user->getPassword(),
-        ]);
-    }
-
-    #[Route('/user/{id}', name: 'app_user_edit', methods: ['PUT'], requirements: ['id' => '\d+'])]
-    public function edit(ManagerRegistry $doctrine, Request $request, int $id): Response
-    {
-        $entityManager = $doctrine->getManager();
-        $user = $entityManager->getRepository(User::class)->find($id);
-
-        if (!$user) {
-            return $this->json('No user found for id' . $id, 404);
-        }
-
-        $user->setLogin($request->request->get('login'));
-        $user->setPassword($request->request->get('password'));
-
-        $entityManager->flush();
-
-        return $this->json('User updated successfully');
-    }
-
-    #[Route('/user/{id}', name: 'app_user_delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
-    public function delete(ManagerRegistry $doctrine, int $id): Response
-    {
-        $entityManager = $doctrine->getManager();
-        $user = $entityManager->getRepository(User::class)->find($id);
-
-        if (!$user) {
-            return $this->json('No user found for id' . $id, 404);
-        }
-
-        $entityManager->remove($user);
-        $entityManager->flush();
-
-        return $this->json('User deleted successfully');
+        return $this->json('Registered successfully with id ' . $user->getId());
     }
 
     #[Route('/login', name: 'app_user_login', methods: ['POST'])]
-    public function login(ManagerRegistry $doctrine, Request $request): Response
+    public function login(ManagerRegistry $doctrine, Request $request, UserPasswordHasherInterface $passwordEncoder): Response
     {
-        $login = $request->request->get('login');
-        $password = $request->request->get('password');
+        $email = $request->get('email');
+        $plainPassword = $request->get('password');
 
-        $user = $doctrine->getRepository(User::class)->findOneBy(['login' => $login]);
-        $passwordHash = $user->getPassword();
+        $user = $doctrine->getRepository(User::class)->findOneBy(['email' => $email]);
 
-        if (password_verify($password, $passwordHash)) {
-            return $this->json('Login successful');
-        } else {
-            return $this->json('Login failed', 401);
+        if (!$user) {
+            return $this->json('No user found for email ' . $email, 404);
         }
+
+        if (!$passwordEncoder->isPasswordValid($user, $plainPassword)) {
+            return $this->json('Invalid password', 404);
+        }
+
+        return $this->json('Logged in successfully');
     }
 }

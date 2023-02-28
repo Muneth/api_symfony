@@ -56,7 +56,13 @@ class MarqueController extends AbstractController
         $entityManager = $doctrine->getManager();
 
         $marque = new Marque();
-        $marque->setMarque($request->request->get('marque'));
+        $marqueExists = $doctrine->getRepository(Marque::class)->findOneBy(['marque' => $request->request->get('marque')]);
+
+        if ($marqueExists) {
+            return $this->json('Marque already exists', 400);
+        } else {
+            $marque->setMarque($request->request->get('marque'));
+        }
 
         $entityManager->persist($marque);
         $entityManager->flush();

@@ -33,7 +33,7 @@ class PersonneController extends AbstractController
                 'tel' => $personne->getTel(),
                 'ville' => $personne->getVille(),
                 'user' => $personne->getUser()->getId(),
-                // show all voiture 
+                // show all voiturs
                 'voiture' => $personne->getVoitures()->map(function ($voiture) {
                     return [
                         'id' => $voiture->getId(),
