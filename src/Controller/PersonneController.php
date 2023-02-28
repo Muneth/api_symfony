@@ -15,6 +15,8 @@ use Symfony\Component\HttpFoundation\Request;
 #[Route('/api', name: 'app_')]
 class PersonneController extends AbstractController
 {
+    // Getting All Personnes
+    // http://localhost:8000/api/personne
     #[Route('/personne', name: 'app_personne', methods: ['GET'])]
     public function index(ManagerRegistry $doctrine): Response
     {
@@ -29,11 +31,11 @@ class PersonneController extends AbstractController
                 'id' => $personne->getId(),
                 'nom' => $personne->getNom(),
                 'prenom' => $personne->getPrenom(),
-                'email' => $personne->getEmail(),
+                'email' => $personne->getUser()->getEmail(),
                 'tel' => $personne->getTel(),
                 'ville' => $personne->getVille(),
                 'user' => $personne->getUser()->getId(),
-                // show all voiturs
+                // show all voitures
                 'voiture' => $personne->getVoitures()->map(function ($voiture) {
                     return [
                         'id' => $voiture->getId(),
@@ -48,6 +50,8 @@ class PersonneController extends AbstractController
         return $this->json($data);
     }
 
+    // Getting Personne by id
+    // http://localhost:8000/api/personne/{id}
     #[Route('/personne/{id}', name: 'app_personne_id', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function getPersonneById(ManagerRegistry $doctrine, $id): Response
     {
@@ -61,7 +65,7 @@ class PersonneController extends AbstractController
             'id' => $personne->getId(),
             'nom' => $personne->getNom(),
             'prenom' => $personne->getPrenom(),
-            'email' => $personne->getEmail(),
+            'email' => $personne->getUser()->getEmail(),
             'tel' => $personne->getTel(),
             'ville' => $personne->getVille(),
             'user' => $personne->getUser()->getId(),
@@ -71,6 +75,7 @@ class PersonneController extends AbstractController
                     'id' => $voiture->getId(),
                     'model' => $voiture->getModel(),
                     'immatriculation' => $voiture->getImmatriculation(),
+                    'places' => $voiture->getPlaces(),
                     'marque' => $voiture->getMarque()->getId(),
                 ];
             })->toArray(),
@@ -79,18 +84,19 @@ class PersonneController extends AbstractController
         return $this->json($data);
     }
 
+    // Creating a new Personne
+    // http://localhost:8000/api/personne
     #[Route('/personne', name: 'app_personne_create', methods: ['POST'])]
     public function new(ManagerRegistry $doctrine, Request $request): Response
     {
         $entityManager = $doctrine->getManager();
 
+        $user = $doctrine->getRepository(User::class)->find($request->request->get('id_user'));
         $personne = new Personne();
         $personne->setNom($request->request->get('nom'));
         $personne->setPrenom($request->request->get('prenom'));
-        $personne->setEmail($request->request->get('email'));
         $personne->setTel($request->request->get('tel'));
         $personne->setVille($request->request->get('ville'));
-        $user = $doctrine->getRepository(User::class)->find($request->request->get('id_user'));
         $personne->setUser($user);
 
         $voiture = new Voiture();
@@ -106,43 +112,59 @@ class PersonneController extends AbstractController
         $entityManager->persist($personne);
         $entityManager->flush();
 
-        return $this->json('Personne created successfully');
+        return $this->json('Personne created successfully with id ' . $personne->getId());
     }
 
-    #[Route('/personne/{id}/{id_voiture}', name: 'app_personne_update', methods: ['PUT'], requirements: ['id' => '\d+'])]
-    public function update(ManagerRegistry $doctrine, Request $request, $id): Response
+    // Updating Personne and his voiture
+    // http://localhost:8000/api/personne/{id}/{voiture}
+    #[Route('/personne/{id}/{voiture}', name: 'app_personne_update', methods: ['PUT'])]
+    public function update(ManagerRegistry $doctrine, Request $request, $id, $voiture): Response
     {
         $entityManager = $doctrine->getManager();
         $personne = $doctrine->getRepository(Personne::class)->find($id);
+        $voiture = $doctrine->getRepository(Voiture::class)->find($voiture);
 
         if (!$personne) {
-            return $this->json('No personne found for id' . $id, 404);
+            return $this->json('No personne found for id ' . $id, 404);
         }
 
         $personne->setNom($request->request->get('nom'));
         $personne->setPrenom($request->request->get('prenom'));
-        $personne->setEmail($request->request->get('email'));
         $personne->setTel($request->request->get('tel'));
         $personne->setVille($request->request->get('ville'));
-        $user = $doctrine->getRepository(User::class)->find($request->request->get('id_user'));
-        $personne->setUser($user);
 
-        $voiture = $doctrine->getRepository(Voiture::class)->find($request->request->get('id_voiture'));
         $voiture->setModel($request->request->get('model'));
         $voiture->setImmatriculation($request->request->get('immatriculation'));
         $voiture->setPlaces($request->request->get('places'));
         $marque = $doctrine->getRepository(Marque::class)->find($request->request->get('id'));
         $voiture->setMarque($marque);
-        $voiture->setPersonne($personne);
 
-        $entityManager->persist($voiture);
-
-        $entityManager->persist($personne);
         $entityManager->flush();
 
-        return $this->json('Personne updated successfully');
+        $data = [
+            'id' => $personne->getId(),
+            'nom' => $personne->getNom(),
+            'prenom' => $personne->getPrenom(),
+            'email' => $personne->getUser()->getEmail(),
+            'tel' => $personne->getTel(),
+            'ville' => $personne->getVille(),
+            'user' => $personne->getUser()->getId(),
+            // show all voitures
+            'voiture' => $personne->getVoitures()->map(function ($voiture) {
+                return [
+                    'id' => $voiture->getId(),
+                    'model' => $voiture->getModel(),
+                    'immatriculation' => $voiture->getImmatriculation(),
+                    'places' => $voiture->getPlaces(),
+                    'marque' => $voiture->getMarque()->getId(),
+                ];
+            })->toArray(),
+        ];
+        return $this->json($data);
     }
 
+    // Deleting Personne and his voiture
+    // http://localhost:8000/api/personne/{id}
     #[Route('/personne/{id}', name: 'app_personne_delete', methods: ['DELETE'], requirements: ['id' => '\d+'])]
     public function delete(ManagerRegistry $doctrine, $id): Response
     {

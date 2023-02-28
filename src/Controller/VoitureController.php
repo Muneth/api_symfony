@@ -59,22 +59,28 @@ class VoitureController extends AbstractController
     public function new(ManagerRegistry $doctrine, Request $request): Response
     {
         $entityManager = $doctrine->getManager();
+        $marque = $doctrine->getRepository(Marque::class)->find($request->request->get('id'));
+        $personne = $doctrine->getRepository(Personne::class)->find($request->request->get('personne_id'));
+
+        if (!$marque) {
+            return $this->json('No marque found for id ' . $request->request->get('id'), 404);
+        }
+
+        if (!$personne) {
+            return $this->json('No personne found for id ' . $request->request->get('personne_id'), 404);
+        }
 
         $voiture = new Voiture();
         $voiture->setModel($request->request->get('model'));
         $voiture->setImmatriculation($request->request->get('immatriculation'));
         $voiture->setPlaces($request->request->get('places'));
-        // get marque by id and set it to the voiture
-        $marque = $doctrine->getRepository(Marque::class)->find($request->request->get('id'));
         $voiture->setMarque($marque);
-
-        $personne = $doctrine->getRepository(Personne::class)->find($request->request->get('personne_id'));
         $voiture->setPersonne($personne);
 
         $entityManager->persist($voiture);
         $entityManager->flush();
 
-        return $this->json('Voiture created successfully' . $voiture->getId());
+        return $this->json('Voiture created successfully for ' . $voiture->getPersonne()->getPrenom() . " with id voiture " . $voiture->getId());
     }
 
     #[Route('/voiture/{id}', name: 'voiture_update', methods: ['PUT'], requirements: ['id' => '\d+'])]

@@ -144,9 +144,7 @@ class TrajetController extends AbstractController
 
         $villedepart = $doctrine->getRepository(Ville::class)->find($request->get('villedepart_id'));
         $villearrive = $doctrine->getRepository(Ville::class)->find($request->get('villearrive_id'));
-        // $voiture = $doctrine->getRepository(Voiture::class)->find($request->get('voiture'));
         $conducteur = $doctrine->getRepository(Personne::class)->find($request->get('conducteur_id'));
-        $personneUser = $doctrine->getRepository(Personne::class)->find($request->get('personne_id'));
 
         // get current date
         $date = new \DateTime($request->get('date'));
@@ -156,9 +154,7 @@ class TrajetController extends AbstractController
         $trajet->setKms($request->get('kms'));
         $trajet->setVilledepart($villedepart);
         $trajet->setVillearrive($villearrive);
-        // $trajet->setVoiture($voiture);
         $trajet->setConducteur($conducteur);
-        $trajet->addPersonnesUser($personneUser);
 
         $entityManager->persist($trajet);
         $entityManager->flush();
@@ -179,8 +175,7 @@ class TrajetController extends AbstractController
 
         $villedepart = $doctrine->getRepository(Ville::class)->find($request->get('villedepart_id'));
         $villearrive = $doctrine->getRepository(Ville::class)->find($request->get('villearrive_id'));
-        // $voiture = $doctrine->getRepository(Voiture::class)->find($request->get('voiture'));
-        // $conducteur = $doctrine->getRepository(Personne::class)->find($request->get('conducteur'));
+        $conducteur = $doctrine->getRepository(Personne::class)->find($request->get('conducteur_id'));
 
         // get current date
         $date = new \DateTime($request->get('date'));
@@ -189,8 +184,7 @@ class TrajetController extends AbstractController
         $trajet->setKms($request->get('kms'));
         $trajet->setVilledepart($villedepart);
         $trajet->setVillearrive($villearrive);
-        // $trajet->setVoiture($voiture);
-        // $trajet->setConducteur($conducteur);
+        $trajet->setConducteur($conducteur);
 
         $entityManager->flush();
 

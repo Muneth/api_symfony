@@ -58,4 +58,24 @@ class UserController extends AbstractController
 
         return $this->json('Logged in successfully');
     }
+
+    // List all users
+    #[Route('/users', name: 'app_user_list', methods: ['GET'])]
+    public function list(ManagerRegistry $doctrine): Response
+    {
+        $users = $doctrine
+            ->getRepository(User::class)
+            ->findAll();
+
+        $data = [];
+
+        foreach ($users as $user) {
+            $data[] = [
+                'id' => $user->getId(),
+                'username' => $user->getUsername(),
+                'email' => $user->getEmail(),
+            ];
+        }
+        return $this->json($data);
+    }
 }
