@@ -18,30 +18,40 @@ class ReservationController extends AbstractController
 {
     // Insert inscription by Conducteur
     // 
-    #[Route('/insertInscription', name: 'insert_inscription_by_conducteur', methods: ['POST'])]
-    public function insertReservation(ManagerRegistry $doctrine, Request $request): Response
+    #[Route('/insertInscription/{id}', name: 'insert_inscription_by_conducteur', methods: ['POST'])]
+    public function insertReservation(ManagerRegistry $doctrine, Request $request, $id): Response
     {
-        $personne = $doctrine->getRepository(Personne::class)->find($request->request->get('conducteur_id'));
-        $villedepart = $doctrine->getRepository(Ville::class)->find($request->request->get('villedepart_id'));
-        $villearrive = $doctrine->getRepository(Ville::class)->find($request->request->get('villearrive_id'));
+        $personne = $doctrine->getRepository(Personne::class)->findOneBy(['user' => $id]);
+        // $villedepart = $doctrine->getRepository(Ville::class)->find($request->request->get('villedepart_id'));
+        // $villearrive = $doctrine->getRepository(Ville::class)->find($request->request->get('villearrive_id'));
+        // find ville by name
+        $villedepart = $doctrine->getRepository(Ville::class)->findOneBy(['nom' => $request->request->get('villedepart')]);
+        $villearrive = $doctrine->getRepository(Ville::class)->findOneBy(['nom' => $request->request->get('villearrive')]);
+        $errors = [];
 
-        if (!$personne) {
-            return $this->json('No personne found for id ' . $request->request->get('conducteur_id'), 404);
+        if (empty($personne)) {
+            array_push($errors, 'personne non trouvé');
         }
 
-        if (!$villedepart) {
-            return $this->json('No ville found for id ' . $request->request->get('villedepart_id'), 404);
+        if (empty($villedepart)) {
+            array_push($errors, 'ville de départ non trouvé');
         }
 
-        if (!$villearrive) {
-            return $this->json('No ville found for id ' . $request->request->get('villearrive_id'), 404);
+        if (empty($villearrive)) {
+            array_push($errors, 'ville d\'arrivée non trouvé');
         }
 
         if ($villedepart == $villearrive) {
-            return $this->json('Ville de départ et ville d\'arrivée ne peuvent pas être identiques', 404);
+            array_push($errors, 'ville de départ et ville d\'arrivée doivent être différent');
         }
+
+        if (count($errors) > 0) {
+            return $this->json($errors, 400);
+        }
+
         $trajet = new Trajet();
-        $trajet->setDate(new \DateTime($request->request->get('date')));
+        // set current date and time 
+        $trajet->setDate(new \DateTime());
         $trajet->setKms($request->request->get('kms'));
         $trajet->setVilledepart($villedepart);
         $trajet->setVillearrive($villearrive);
@@ -100,16 +110,22 @@ class ReservationController extends AbstractController
     #[Route('/listeInscriptions/{id}', name: 'liste_inscriptions_by_conducteur', methods: ['GET'])]
     public function listeInscriptionConducteur(ManagerRegistry $doctrine, Request $request,  $id): Response
     {
-        $personne = $doctrine->getRepository(Personne::class)->find($id);
+        // $personne = $doctrine->getRepository(Personne::class)->find($id);
+        $personne = $doctrine->getRepository(Personne::class)->findBy(['user' => $id]);
 
+        $errors = [];
         if (!$personne) {
-            return $this->json('No personne found for id ' . $id, 404);
+            array_push($errors, "Remplissez les informations de votre profil pour ajouter des trajets");
         }
 
         //  find all trajet by conducteur id
         $trajets = $doctrine->getRepository(Trajet::class)->findBy(['conducteur' => $personne]);
 
         $trajetsArray = [];
+
+        if (empty($trajets)) {
+            array_push($errors, 'Aucun trajet trouvé');
+        }
 
         foreach ($trajets as $trajet) {
             $voitures = $trajet->getConducteur()->getVoitures()->map(function ($voiture) {
@@ -129,7 +145,7 @@ class ReservationController extends AbstractController
 
             $trajetsArray[] = [
                 'id' => $trajet->getId(),
-                'date' => $trajet->getDate(),
+                'date' => $trajet->getDate()->format('d-m-Y'),
                 'kms' => $trajet->getKms(),
                 'villedepart' => $trajet->getVilledepart()->getNom(),
                 'villearrive' => $trajet->getVillearrive()->getNom(),
@@ -137,6 +153,10 @@ class ReservationController extends AbstractController
                 'personnes' => $trajet->getPersonnesUser()->count(),
                 'voiture' => $voiture,
             ];
+        }
+
+        if (count($errors) > 0) {
+            return $this->json($errors, 400);
         }
 
         $json = json_encode($trajetsArray, JSON_PRETTY_PRINT);

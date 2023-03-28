@@ -44,7 +44,7 @@ class TrajetController extends AbstractController
 
             $data[] = [
                 'id' => $trajet->getId(),
-                'date' => $trajet->getDate(),
+                'date' => $trajet->getDate()->format('d-m-Y'),
                 'kms' => $trajet->getKms(),
                 'villedepart' => $trajet->getVilledepart()->getNom(),
                 'villearrive' => $trajet->getVillearrive()->getNom(),
@@ -110,7 +110,7 @@ class TrajetController extends AbstractController
 
         $data = [
             'id' => $trajet->getId(),
-            'date' => $trajet->getDate(),
+            'date' => $trajet->getDate()->format('d-m-Y'),
             'kms' => $trajet->getKms(),
             'villedepart' => $trajet->getVilledepart()->getNom(),
             'villearrive' => $trajet->getVillearrive()->getNom(),
@@ -206,5 +206,83 @@ class TrajetController extends AbstractController
         $entityManager->flush();
 
         return $this->json('Trajet deleted', 200);
+    }
+
+    // Search all the trajets by name of villedepart and name of villearrive in search form send through POST method
+    #[Route('/trajet/search', name: 'app_trajet_search', methods: ['POST'])]
+    public function search(ManagerRegistry $doctrine, Request $request): Response
+    {
+        $villedepart = $doctrine->getRepository(Ville::class)->findOneBy(['nom' => $request->get('villedepart')]);
+        $villearrive = $doctrine->getRepository(Ville::class)->findOneBy(['nom' => $request->get('villearrive')]);
+
+        $errors = [];
+
+        if ($villedepart == null) {
+            $errors[] = 'Ville de départ non trouvée';
+        }
+
+        if ($villearrive == null) {
+            $errors[] = 'Ville d\'arrivée non trouvée';
+        }
+
+        if ($villedepart == $villearrive) {
+            $errors[] = 'Ville de départ et ville d\'arrivée identiques';
+        }
+
+        if (!empty($errors)) {
+            return $this->json($errors, 404);
+        }
+
+        $trajets = $doctrine->getRepository(Trajet::class)->findBy(['villedepart' => $villedepart, 'villearrive' => $villearrive]);
+
+        if (!$trajets) {
+            return $this->json('No trajet found for villedepart ' . $villedepart->getNom() . ' and villearrive ' . $villearrive->getNom(), 404);
+        }
+
+        $data = [];
+        foreach ($trajets as $trajet) {
+            $voitures = $trajet->getConducteur()->getVoitures()->map(function ($voiture) {
+                return [
+                    'id' => $voiture->getId(),
+                    'model' => $voiture->getModel(),
+                    'immatriculation' => $voiture->getImmatriculation(),
+                    'marque' => $voiture->getMarque()->getId(),
+                ];
+            })->toArray();
+
+            if (empty($voitures))
+                //continue;
+                $voiture = [];
+            else
+                $voiture = $voitures[0];
+
+            $data[] = [
+                'id' => $trajet->getId(),
+                'date' => $trajet->getDate()->format('d-m-Y'),
+                'kms' => $trajet->getKms(),
+                'villedepart' => $trajet->getVilledepart()->getNom(),
+                'villearrive' => $trajet->getVillearrive()->getNom(),
+                // Details of single voiture from the array of voitures owned by conducteur
+                'voiture' => $voiture,
+                'conducteur' => [
+                    'id' => $trajet->getConducteur()->getId(),
+                    'nom' => $trajet->getConducteur()->getNom(),
+                    'prenom' => $trajet->getConducteur()->getPrenom(),
+                    'email' => $trajet->getConducteur()->getEmail(),
+                    'tel' => $trajet->getConducteur()->getTel(),
+                    'ville' => $trajet->getConducteur()->getVille(),
+                    'voitures' => $trajet->getConducteur()->getVoitures()->map(function ($voiture) {
+                        return [
+                            'id' => $voiture->getId(),
+                            'model' => $voiture->getModel(),
+                            'immatriculation' => $voiture->getImmatriculation(),
+                            'marque' => $voiture->getMarque()->getId(),
+                        ];
+                    })->toArray(),
+                ],
+            ];
+
+            return $this->json($data);
+        }
     }
 }

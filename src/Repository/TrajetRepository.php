@@ -39,28 +39,43 @@ class TrajetRepository extends ServiceEntityRepository
         }
     }
 
-//    /**
-//     * @return Trajet[] Returns an array of Trajet objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('t')
-//            ->andWhere('t.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('t.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
 
-//    public function findOneBySomeField($value): ?Trajet
-//    {
-//        return $this->createQueryBuilder('t')
-//            ->andWhere('t.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    //    /**
+    //     * @return Trajet[] Returns an array of Trajet objects
+    //     */
+    //    public function findByExampleField($value): array
+    //    {
+    //        return $this->createQueryBuilder('t')
+    //            ->andWhere('t.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->orderBy('t.id', 'ASC')
+    //            ->setMaxResults(10)
+    //            ->getQuery()
+    //            ->getResult()
+    //        ;
+    //    }
+    public function searchTrajet($depart, $arrivee)
+    {
+        $qb = $this->createQueryBuilder('t');
+        $qb->where('t.depart = :depart')
+            ->andWhere('t.arrivee = :arrivee')
+            // ->andWhere('t.date = :date')
+            ->setParameter('depart', $depart)
+            ->setParameter('arrivee', $arrivee);
+        // ->setParameter('date', $date);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    //    public function findOneBySomeField($value): ?Trajet
+    //    {
+    //        return $this->createQueryBuilder('t')
+    //            ->andWhere('t.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
+
+
 }
